@@ -1,0 +1,48 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "listings",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "listings",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "zone", "order": "ASCENDING" },
+        { "fieldPath": "pricePerYear", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "listings",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "type", "order": "ASCENDING" },
+        { "fieldPath": "pricePerYear", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "listings",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "verified", "order": "DESCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "verificationRequests",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "uploaderId", "order": "ASCENDING" },
+        { "fieldPath": "submittedAt", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

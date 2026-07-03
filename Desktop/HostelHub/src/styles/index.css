@@ -1,0 +1,67 @@
+@import './tokens.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    font-family: var(--font-body);
+    color: rgb(var(--color-text));
+    background: rgb(var(--color-bg));
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-heading);
+    letter-spacing: -0.01em;
+  }
+
+  /* Larger tap targets on touch devices */
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Hide scrollbars on horizontal filter chip rows */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+@layer components {
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-chip border border-border bg-bg-card px-3 py-1.5 text-sm font-medium text-text transition-colors hover:bg-bg-hover;
+  }
+
+  .chip-active {
+    @apply border-primary bg-primary text-white hover:bg-primary-700;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-accent px-5 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-accent-600 active:bg-accent-700 disabled:opacity-50;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-border bg-bg-card px-5 py-3 text-sm font-semibold text-text transition-colors hover:bg-bg-hover;
+  }
+
+  .badge-verified {
+    @apply inline-flex items-center gap-1 rounded-full bg-verified-50 px-2 py-0.5 text-2xs font-semibold text-verified;
+  }
+}

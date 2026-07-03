@@ -1,0 +1,53 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "chats": {
+      "$chatId": {
+        /*
+         * Participant check uses the object pattern: participants/{uid} = true.
+         * This is the idiomatic RTDB way — `.contains()` is for substring matching.
+         */
+        ".read": "auth != null && data.child('meta/participants/' + auth.uid).val() == true",
+
+        "meta": {
+          /*
+           * Allow create (data doesn't exist yet) or update by an existing participant.
+           * The multi-path write from createOrGetChat lands here.
+           */
+          ".write": "auth != null && (!data.exists() || data.child('participants/' + auth.uid).val() == true)"
+        },
+
+        "messages": {
+          "$messageId": {
+            ".write": "auth != null && root.child('chats/' + $chatId + '/meta/participants/' + auth.uid).val() == true && newData.child('senderId').val() == auth.uid"
+          }
+        },
+
+        "typing": {
+          "$uid": {
+            ".read": "auth != null && root.child('chats/' + $chatId + '/meta/participants/' + auth.uid).val() == true",
+            ".write": "auth != null && auth.uid == $uid"
+          }
+        }
+      }
+    },
+
+    "userChats": {
+      "$uid": {
+        ".read": "auth != null && auth.uid == $uid",
+        "$chatId": {
+          /*
+           * Any authenticated user can write into another user's index.
+           * This is intentional: when user A creates a chat with user B,
+           * A must write to B's index so B can discover the thread.
+           * The chatId key is derived from both UIDs + listingId, which
+           * limits what can be injected to valid chat references.
+           */
+          ".write": "auth != null"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,57 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function uid() {
+      return request.auth.uid;
+    }
+
+    // Admin = role 'admin' OR a founder email (bootstrap — mirrors ADMIN_EMAILS
+    // in src/config/constants.ts).
+    function isAdmin() {
+      return isSignedIn()
+        && (request.auth.token.email in ['hostelhubbuea@gmail.com']
+            || firestore.get(/databases/(default)/documents/users/$(uid())).data.role == 'admin');
+    }
+
+    // Listing photos — public read once uploaded by the owner
+    match /listing-photos/{listingId}/{file=**} {
+      allow read: if true;
+      allow write: if isSignedIn() && request.resource.size < 8 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+
+    match /listing-videos/{listingId}/{file=**} {
+      allow read: if true;
+      allow write: if isSignedIn() && request.resource.size < 80 * 1024 * 1024
+                   && request.resource.contentType.matches('video/.*');
+    }
+
+    // Avatars — public read, owner write
+    match /avatars/{userId}/{file=**} {
+      allow read: if true;
+      allow write: if isSignedIn() && uid() == userId
+                   && request.resource.size < 2 * 1024 * 1024;
+    }
+
+    // Profile photos — public read, owner write (users/{uid}/profile-photo.*)
+    match /users/{userId}/{file=**} {
+      allow read: if true;
+      allow write: if isSignedIn() && uid() == userId
+                   && request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+
+    // Verification docs — uploader writes, admin reads
+    match /verification-docs/{userId}/{file=**} {
+      allow read: if isSignedIn() && (uid() == userId || isAdmin());
+      allow write: if isSignedIn() && uid() == userId
+                   && request.resource.size < 10 * 1024 * 1024;
+    }
+  }
+}

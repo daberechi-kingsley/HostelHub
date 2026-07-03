@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create *)",
+      "Bash(npm install *)",
+      "Bash(ls /c/Users/GLC/Desktop/HostelHub/node_modules 2>&1 | head -5; echo \"---\"; cat \"/c/Users/GLC/AppData/Local/Temp/claude/C--Users-GLC-Desktop-HostelHub/6693d982-48ab-42b6-bfa7-2803a1e35474/tasks/bxzhsy36d.output\" 2>&1 | tail -10)",
+      "Bash(npm --version)",
+      "Bash(npm config *)",
+      "Bash(npm ping *)",
+      "Bash(npm cache *)",
+      "Bash(npm run *)"
+    ]
+  }
+}

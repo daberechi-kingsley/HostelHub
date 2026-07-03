@@ -1,0 +1,164 @@
+rules_version = '2';
+
+// HostelHub v1 — locked rule intent:
+//   listings: anyone reads status==active; only owner/admin writes; verified is admin-only
+//   users: read self; admin reads all; phone never returned to other users (enforced via callable)
+//   saves: owner-only
+//   bookings/inquiries: read self or counterpart or admin; writes via Functions only
+//   verificationRequests: writer or admin
+//   config: read public flags only; admin writes
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function uid() {
+      return request.auth.uid;
+    }
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(uid())).data;
+    }
+
+    // Admin = role 'admin' OR a founder email (bootstrap — mirrors ADMIN_EMAILS
+    // in src/config/constants.ts). Email check is first so a missing user doc
+    // never blocks the founder.
+    function isAdmin() {
+      return isSignedIn()
+             && (request.auth.token.email in ['hostelhubbuea@gmail.com']
+                 || userDoc().role == 'admin');
+    }
+
+    // Listings — public discovery, restricted writes
+    match /listings/{listingId} {
+      allow read: if resource.data.status == 'active' || isAdmin()
+                  || (isSignedIn() && resource.data.ownerId == uid());
+      allow create: if isSignedIn()
+                    && request.resource.data.ownerId == uid()
+                    && request.resource.data.verified == false
+                    && request.resource.data.status in ['draft', 'pending'];
+      allow update: if isSignedIn()
+                    && resource.data.ownerId == uid()
+                    && request.resource.data.verified == resource.data.verified
+                    && request.resource.data.ownerId == resource.data.ownerId
+                    || isAdmin();
+      // Owner can delete any of their own listings; admin can delete anything
+      allow delete: if isAdmin()
+                    || (isSignedIn() && resource.data.ownerId == uid());
+    }
+
+    // Users — self-read + admin-read; never expose phone to other clients
+    match /users/{userId} {
+      allow read: if isSignedIn() && (uid() == userId || isAdmin());
+
+      // Regular users may only self-create one of the three public roles.
+      // role 'admin' is creatable only by someone whose Auth token email
+      // matches the admin email (isAdmin()) — the password being in the bundle
+      // doesn't help anyone, because they'd still need to authenticate as that
+      // email to pass this check.
+      allow create: if isSignedIn() && uid() == userId
+                    && (request.resource.data.role in ['student', 'landlord', 'agent']
+                        || (isAdmin() && request.resource.data.role == 'admin'));
+
+      // Regular users may update their own doc but NOT change role or verified.
+      // Admins (email-matched token) may change anything.
+      allow update: if (isSignedIn() && uid() == userId
+                        && request.resource.data.role == resource.data.role
+                        && request.resource.data.verified == resource.data.verified)
+                    || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Saves — owner-only
+    match /saves/{userId}/listings/{listingId} {
+      allow read, write: if isSignedIn() && uid() == userId;
+    }
+
+    // Inquiries (visit requests) — students write their own; landlord responds; admin can do anything
+    match /inquiries/{inquiryId} {
+      // Both student and landlord may read their own inquiry
+      allow read: if isSignedIn()
+                  && (resource.data.studentId == uid()
+                      || resource.data.landlordId == uid()
+                      || isAdmin());
+
+      // Student creates: inquiryId must be {studentId}_{listingId}, studentId must match auth
+      allow create: if isSignedIn()
+                    && request.resource.data.studentId == uid()
+                    && inquiryId == (uid() + '_' + request.resource.data.listingId)
+                    && request.resource.data.status == 'pending';
+
+      // Student updates (reschedule or cancel): only their own, only allowed field changes
+      allow update: if isSignedIn()
+                    && resource.data.studentId == uid()
+                    && (
+                      // reschedule: status stays pending, update date/slot/message
+                      request.resource.data.status == 'pending'
+                      // cancel: only status can flip to cancelled
+                      || (request.resource.data.status == 'cancelled'
+                          && request.resource.data.proposedDate == resource.data.proposedDate
+                          && request.resource.data.proposedSlot == resource.data.proposedSlot)
+                    )
+                    // studentId and landlordId must not change
+                    && request.resource.data.studentId == resource.data.studentId
+                    && request.resource.data.landlordId == resource.data.landlordId
+                    || (
+                      // Landlord confirms / declines
+                      isSignedIn()
+                      && resource.data.landlordId == uid()
+                      && request.resource.data.status in ['confirmed', 'declined']
+                      && request.resource.data.studentId == resource.data.studentId
+                      && request.resource.data.landlordId == resource.data.landlordId
+                    )
+                    || isAdmin();
+
+      allow delete: if isAdmin();
+    }
+
+    match /bookings/{bookingId} {
+      allow read: if isSignedIn()
+                  && (resource.data.studentId == uid()
+                      || resource.data.landlordId == uid()
+                      || isAdmin());
+      allow write: if false;
+    }
+
+    // Reviews — reviewId must be {authorId}_{listingId}: one review per
+    // student per listing, enforced by the ID itself. Aggregates on the
+    // listing are recomputed by the onReviewCreated Cloud Function.
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isSignedIn()
+                    && request.resource.data.authorId == uid()
+                    && reviewId == (uid() + '_' + request.resource.data.listingId)
+                    && request.resource.data.rating is number
+                    && request.resource.data.rating >= 1
+                    && request.resource.data.rating <= 5;
+      allow update, delete: if isAdmin();
+    }
+
+    match /verificationRequests/{requestId} {
+      allow read: if isSignedIn() && (resource.data.uploaderId == uid() || isAdmin());
+      allow create: if isSignedIn() && request.resource.data.uploaderId == uid();
+      allow update, delete: if isAdmin();
+    }
+
+    // Config — anyone reads (feature flags, chatMode). Admin only writes.
+    match /config/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Roommate profiles — signed-in users can read (for match display).
+    // Only the owner can write their own profile.
+    // Phone / email are not stored here so read-all-signed-in is safe.
+    match /roommateProfiles/{userId} {
+      allow read:   if isSignedIn();
+      allow create, update: if isSignedIn() && uid() == userId;
+      allow delete: if isSignedIn() && uid() == userId || isAdmin();
+    }
+  }
+}

@@ -1,0 +1,35 @@
+/* Locked brand tokens — do not edit without product approval */
+
+:root {
+  /* Brand colours (same in light + dark) live in tailwind.config as hex. */
+
+  /* Surfaces / text / borders — flip in dark mode. Stored as "R G B" triplets
+     so Tailwind opacity modifiers (e.g. bg-bg-card/95) work through
+     rgb(var(--token) / <alpha-value>). */
+  --color-text: 31 41 55; /* Charcoal */
+  --color-text-muted: 107 114 128;
+  --color-text-subtle: 156 163 175;
+  --color-bg: 250 250 250; /* Cream page */
+  --color-bg-card: 255 255 255; /* White card */
+  --color-bg-hover: 243 244 246;
+  --color-border: 229 231 235; /* Mist */
+  --color-border-strong: 209 213 219;
+
+  color-scheme: light;
+
+  --font-heading: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+}
+
+.dark {
+  --color-text: 233 236 241; /* Near-white */
+  --color-text-muted: 156 163 175;
+  --color-text-subtle: 122 130 143;
+  --color-bg: 15 17 21; /* Near-black page */
+  --color-bg-card: 26 29 36; /* Elevated card */
+  --color-bg-hover: 38 42 51;
+  --color-border: 45 51 62;
+  --color-border-strong: 61 68 82;
+
+  color-scheme: dark;
+}
