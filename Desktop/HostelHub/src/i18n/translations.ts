@@ -120,7 +120,7 @@ export const translations = {
     'search.aiRanked': 'AI ranked',
     'search.clearFilters': 'Clear filters',
     'search.sortedRelevance': 'Sorted by relevance',
-    'search.sortedNewest': 'Sorted by newest',
+    'search.sortedNewest': 'Sorted by top rated',
     'search.emptyTitle': 'No listings matched',
     'search.emptyDesc':
       'Try removing a filter, widening your price, or searching a different zone.',
@@ -477,7 +477,7 @@ export const translations = {
     'search.aiRanked': 'Classé par IA',
     'search.clearFilters': 'Effacer les filtres',
     'search.sortedRelevance': 'Trié par pertinence',
-    'search.sortedNewest': 'Trié par nouveauté',
+    'search.sortedNewest': 'Trié par mieux notés',
     'search.emptyTitle': 'Aucune annonce trouvée',
     'search.emptyDesc':
       'Essayez de retirer un filtre, d’élargir votre budget ou de chercher une autre zone.',
