@@ -147,6 +147,25 @@ async function ensureAdminUserDoc(user: FirebaseUser): Promise<void> {
   }
 }
 
+// ---- Email/password registration (regular users) ----
+
+/**
+ * Register a new user with email + password and immediately write their
+ * HostelHub user doc. Bypasses the RoleSelection gate because role is
+ * captured in the registration form.
+ */
+export async function registerWithEmailPassword(
+  email: string,
+  password: string,
+  displayName: string,
+  role: Exclude<UserRole, 'admin'>,
+): Promise<FirebaseUser> {
+  const auth = getFirebaseAuth();
+  const cred = await createUserWithEmailAndPassword(auth, email, password);
+  await createUserDoc({ uid: cred.user.uid, role, displayName, email });
+  return cred.user;
+}
+
 // ---- Sign out ----
 
 export async function signOutUser(): Promise<void> {

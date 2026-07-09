@@ -1,7 +1,8 @@
-import { X, Smartphone, Globe, ArrowLeft, Loader2, Mail } from 'lucide-react';
+import { X, Smartphone, Globe, ArrowLeft, Loader2, Mail, Eye, EyeOff, GraduationCap, Home, Briefcase } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { ConfirmationResult } from 'firebase/auth';
+import { clsx } from 'clsx';
 import { useAuthModalStore, type AuthGate } from '@/stores/authModalStore';
 import { useUser } from '@/hooks/useUser';
 import {
@@ -11,10 +12,12 @@ import {
   clearRecaptcha,
   isAdminCredential,
   signInAdmin,
+  registerWithEmailPassword,
 } from '@/lib/firebase/auth';
 import Button from '@/components/ui/Button';
 import { useT } from '@/i18n/useT';
 import type { TranslationKey } from '@/i18n/translations';
+import type { UserRole } from '@/types/user';
 
 const RECAPTCHA_ID = 'hostelhub-recaptcha';
 
@@ -26,7 +29,15 @@ const GATE_COPY: Record<Exclude<AuthGate, null>, { title: TranslationKey; body: 
   signin: { title: 'auth.gateSigninTitle', body: 'auth.gateSigninBody' },
 };
 
-type Step = 'method' | 'phone' | 'otp' | 'email';
+type SelectableRole = Exclude<UserRole, 'admin'>;
+
+const ROLE_OPTIONS: { role: SelectableRole; labelKey: TranslationKey; Icon: typeof Home }[] = [
+  { role: 'student', labelKey: 'role.studentLabel', Icon: GraduationCap },
+  { role: 'landlord', labelKey: 'role.landlordLabel', Icon: Home },
+  { role: 'agent', labelKey: 'role.agentLabel', Icon: Briefcase },
+];
+
+type Step = 'method' | 'phone' | 'otp' | 'email' | 'register';
 
 export default function LazyAuthModal() {
   const open = useAuthModalStore((s) => s.open);
@@ -41,6 +52,9 @@ export default function LazyAuthModal() {
   const [otp, setOtp] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [regRole, setRegRole] = useState<SelectableRole | null>(null);
   const [confirmation, setConfirmation] = useState<ConfirmationResult | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,6 +77,9 @@ export default function LazyAuthModal() {
     setOtp('');
     setEmail('');
     setPassword('');
+    setFullName('');
+    setShowPassword(false);
+    setRegRole(null);
     setConfirmation(null);
     setBusy(false);
     setError(null);
@@ -81,7 +98,6 @@ export default function LazyAuthModal() {
     setError(null);
     try {
       await signInWithGoogle();
-      // onAuthStateChanged will pick it up; RoleSelection gate handles the rest.
       hide();
     } catch (err) {
       setError(humanizeAuthError(err));
@@ -127,12 +143,6 @@ export default function LazyAuthModal() {
     }
   }
 
-  /**
-   * Email sign-in. Reserved for the hidden admin account — only the configured
-   * admin credentials are accepted; everything else is rejected because regular
-   * users authenticate with Google or phone. On success the admin is recognised
-   * automatically and redirected to the dashboard.
-   */
   async function handleEmailSignIn(e: FormEvent) {
     e.preventDefault();
     setError(null);
@@ -145,7 +155,7 @@ export default function LazyAuthModal() {
     setBusy(true);
     try {
       await signInAdmin(email, password);
-      await refreshAppUser(); // load the admin doc before we leave the modal
+      await refreshAppUser();
       hide();
       navigate('/admin');
     } catch (err) {
@@ -153,6 +163,39 @@ export default function LazyAuthModal() {
       setBusy(false);
     }
   }
+
+  async function handleRegister(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+
+    if (!fullName.trim()) {
+      setError('Please enter your full name.');
+      return;
+    }
+    if (!regRole) {
+      setError('Please select your role to continue.');
+      return;
+    }
+
+    setBusy(true);
+    try {
+      await registerWithEmailPassword(email, password, fullName.trim(), regRole);
+      await refreshAppUser();
+      hide();
+      navigate(regRole === 'student' ? '/search' : '/dashboard');
+    } catch (err) {
+      setError(humanizeAuthError(err));
+      setBusy(false);
+    }
+  }
+
+  function goBack() {
+    if (step === 'otp') return setStep('phone');
+    setStep('method');
+    setError(null);
+  }
+
+  const showBackArrow = step !== 'method';
 
   return (
     <div
@@ -164,18 +207,16 @@ export default function LazyAuthModal() {
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md rounded-t-3xl bg-bg-card p-6 shadow-xl sm:rounded-3xl"
+        className="w-full max-w-md overflow-y-auto rounded-t-3xl bg-bg-card p-6 shadow-xl sm:rounded-3xl"
+        style={{ maxHeight: '90svh' }}
       >
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2 pr-6">
-            {step !== 'method' && (
+            {showBackArrow && (
               <button
                 type="button"
-                onClick={() => {
-                  setStep(step === 'otp' ? 'phone' : 'method');
-                  setError(null);
-                }}
+                onClick={goBack}
                 aria-label="Back"
                 className="rounded-full p-1.5 text-text-muted hover:bg-bg-hover"
               >
@@ -188,12 +229,14 @@ export default function LazyAuthModal() {
                 {step === 'phone' && t('auth.phoneTitle')}
                 {step === 'otp' && t('auth.otpTitle')}
                 {step === 'email' && t('auth.emailTitle')}
+                {step === 'register' && t('auth.registerTitle')}
               </h2>
               <p className="text-sm text-text-muted">
                 {step === 'method' && t(copy.body)}
                 {step === 'phone' && t('auth.phoneBody')}
                 {step === 'otp' && `${t('auth.otpBodyPrefix')} ${toCameroonE164(phone) ?? phone}.`}
                 {step === 'email' && t('auth.emailBody')}
+                {step === 'register' && t('auth.registerBody')}
               </p>
             </div>
           </div>
@@ -234,6 +277,21 @@ export default function LazyAuthModal() {
               >
                 {t('auth.continuePhone')}
               </Button>
+              {/* Registration CTA */}
+              <div className="flex items-center justify-center gap-1.5 pt-1">
+                <span className="text-sm text-text-muted">{t('auth.newToHostelHub')}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStep('register');
+                    setError(null);
+                  }}
+                  disabled={busy}
+                  className="text-sm font-semibold text-primary hover:underline"
+                >
+                  {t('auth.createAnAccount')}
+                </button>
+              </div>
               {/* Low-emphasis email entry — the hidden admin sign-in path. */}
               <button
                 type="button"
@@ -242,7 +300,7 @@ export default function LazyAuthModal() {
                   setError(null);
                 }}
                 disabled={busy}
-                className="mx-auto flex items-center gap-1.5 pt-1 text-xs font-medium text-text-muted hover:text-text"
+                className="mx-auto flex items-center gap-1.5 text-xs font-medium text-text-muted hover:text-text"
               >
                 <Mail className="h-3.5 w-3.5" />
                 {t('auth.signInWithEmail')}
@@ -320,6 +378,97 @@ export default function LazyAuthModal() {
             </form>
           )}
 
+          {step === 'register' && (
+            <form onSubmit={handleRegister} className="space-y-3">
+              {/* Full name */}
+              <input
+                type="text"
+                autoFocus
+                autoComplete="name"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder={t('auth.fullNamePlaceholder')}
+                className="w-full rounded-xl border border-border bg-bg px-4 py-3 text-sm outline-none focus:border-primary"
+                aria-label={t('auth.fullName')}
+              />
+              {/* Email */}
+              <input
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                className="w-full rounded-xl border border-border bg-bg px-4 py-3 text-sm outline-none focus:border-primary"
+                aria-label="Email"
+              />
+              {/* Password with show/hide */}
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Password (6+ characters)"
+                  className="w-full rounded-xl border border-border bg-bg px-4 py-3 pr-11 text-sm outline-none focus:border-primary"
+                  aria-label="Password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+              {/* Role selector */}
+              <div className="space-y-2 pt-1">
+                <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+                  {t('auth.chooseRole')}
+                </p>
+                <div className="grid grid-cols-3 gap-2">
+                  {ROLE_OPTIONS.map(({ role, labelKey, Icon }) => {
+                    const active = regRole === role;
+                    return (
+                      <button
+                        key={role}
+                        type="button"
+                        onClick={() => setRegRole(role)}
+                        aria-pressed={active}
+                        className={clsx(
+                          'flex flex-col items-center gap-1.5 rounded-xl border px-2 py-3 text-xs font-semibold transition',
+                          active
+                            ? 'border-primary bg-primary/10 text-primary'
+                            : 'border-border bg-bg text-text-muted hover:bg-bg-hover',
+                        )}
+                      >
+                        <Icon className="h-5 w-5" />
+                        {t(labelKey)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <Button type="submit" variant="primary" fullWidth size="lg" disabled={busy}>
+                {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : t('auth.createAccount')}
+              </Button>
+              <button
+                type="button"
+                onClick={() => {
+                  setStep('method');
+                  setError(null);
+                }}
+                className="mx-auto block text-sm text-text-muted hover:text-text"
+              >
+                {t('auth.alreadyHaveAccount')}
+              </button>
+            </form>
+          )}
+
           {error && (
             <p className="mt-3 rounded-lg bg-accent-50 px-3 py-2 text-sm text-accent-700">
               {error}
@@ -356,6 +505,12 @@ function humanizeAuthError(err: unknown): string {
     case 'auth/wrong-password':
     case 'auth/invalid-credential':
       return 'Those credentials are incorrect.';
+    case 'auth/email-already-in-use':
+      return 'That email is already registered. Try signing in instead.';
+    case 'auth/weak-password':
+      return 'Password must be at least 6 characters.';
+    case 'auth/network-request-failed':
+      return 'Network error. Check your connection and try again.';
     default:
       return 'Something went wrong. Please try again.';
   }

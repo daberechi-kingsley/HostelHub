@@ -172,6 +172,15 @@ export const translations = {
     'auth.verifyContinue': 'Verify & continue',
     'auth.signIn': 'Sign in',
     'auth.otpDevNote': 'Using emulators in dev — the code is printed in the Firebase emulator logs.',
+    'auth.registerTitle': 'Create your account',
+    'auth.registerBody': 'Join students finding rooms in Buea.',
+    'auth.fullName': 'Full name',
+    'auth.fullNamePlaceholder': 'Your full name',
+    'auth.createAccount': 'Create account',
+    'auth.alreadyHaveAccount': 'Already have an account? Sign in',
+    'auth.newToHostelHub': 'New to HostelHub?',
+    'auth.createAnAccount': 'Create an account',
+    'auth.chooseRole': 'I am a...',
 
     // ── Role selection ────────────────────────────────────────────
     'role.welcome': 'Welcome to HostelHub 👋',
@@ -560,6 +569,15 @@ export const translations = {
     'auth.signIn': 'Se connecter',
     'auth.otpDevNote':
       'Émulateurs en développement — le code apparaît dans les journaux de l’émulateur Firebase.',
+    'auth.registerTitle': 'Creer votre compte',
+    'auth.registerBody': 'Rejoignez les etudiants qui trouvent des chambres a Buea.',
+    'auth.fullName': 'Nom complet',
+    'auth.fullNamePlaceholder': 'Votre nom complet',
+    'auth.createAccount': 'Creer un compte',
+    'auth.alreadyHaveAccount': 'Deja un compte ? Se connecter',
+    'auth.newToHostelHub': 'Nouveau sur HostelHub ?',
+    'auth.createAnAccount': 'Creer un compte',
+    'auth.chooseRole': 'Je suis...',
 
     // ── Role selection ────────────────────────────────────────────
     'role.welcome': 'Bienvenue sur HostelHub 👋',
