@@ -7,6 +7,7 @@ import { useAuthModalStore, type AuthGate } from '@/stores/authModalStore';
 import { useUser } from '@/hooks/useUser';
 import {
   signInWithGoogle,
+  signInWithEmailPassword,
   sendPhoneOtp,
   toCameroonE164,
   clearRecaptcha,
@@ -146,18 +147,21 @@ export default function LazyAuthModal() {
   async function handleEmailSignIn(e: FormEvent) {
     e.preventDefault();
     setError(null);
-
-    if (!isAdminCredential(email, password)) {
-      setError('Email sign-in is reserved for administrators. Please use Google or phone.');
-      return;
-    }
-
     setBusy(true);
     try {
-      await signInAdmin(email, password);
-      await refreshAppUser();
-      hide();
-      navigate('/admin');
+      if (isAdminCredential(email, password)) {
+        // Admin path: auto-provision account + Firestore doc on first sign-in,
+        // then redirect straight to the admin dashboard.
+        await signInAdmin(email, password);
+        await refreshAppUser();
+        hide();
+        navigate('/admin');
+      } else {
+        // Regular user path: standard email/password sign-in.
+        await signInWithEmailPassword(email, password);
+        await refreshAppUser();
+        hide();
+      }
     } catch (err) {
       setError(humanizeAuthError(err));
       setBusy(false);
@@ -254,29 +258,22 @@ export default function LazyAuthModal() {
         <div className="mt-6">
           {step === 'method' && (
             <div className="space-y-3">
-              <Button
-                variant="secondary"
-                fullWidth
-                size="lg"
-                leftIcon={<Globe className="h-5 w-5" />}
-                onClick={handleGoogle}
-                disabled={busy}
-              >
-                {t('auth.continueGoogle')}
-              </Button>
-              <Button
-                variant="primary"
-                fullWidth
-                size="lg"
-                leftIcon={<Smartphone className="h-5 w-5" />}
-                onClick={() => {
-                  setStep('phone');
-                  setError(null);
-                }}
-                disabled={busy}
-              >
-                {t('auth.continuePhone')}
-              </Button>
+              {[
+                { icon: <Globe className="h-5 w-5" />, label: t('auth.continueGoogle'), action: handleGoogle },
+                { icon: <Smartphone className="h-5 w-5" />, label: t('auth.continuePhone'), action: () => { setStep('phone'); setError(null); } },
+                { icon: <Mail className="h-5 w-5" />, label: t('auth.signInWithEmail'), action: () => { setStep('email'); setError(null); } },
+              ].map(({ icon, label, action }) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={action}
+                  disabled={busy}
+                  className="group flex w-full items-center justify-center gap-2 rounded-full border border-border bg-bg-card px-6 py-3.5 text-base font-semibold text-text transition-colors hover:border-accent hover:bg-accent hover:text-white disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+                >
+                  <span className="transition-colors group-hover:text-white">{icon}</span>
+                  {label}
+                </button>
+              ))}
               {/* Registration CTA */}
               <div className="flex items-center justify-center gap-1.5 pt-1">
                 <span className="text-sm text-text-muted">{t('auth.newToHostelHub')}</span>
@@ -292,19 +289,6 @@ export default function LazyAuthModal() {
                   {t('auth.createAnAccount')}
                 </button>
               </div>
-              {/* Low-emphasis email entry — the hidden admin sign-in path. */}
-              <button
-                type="button"
-                onClick={() => {
-                  setStep('email');
-                  setError(null);
-                }}
-                disabled={busy}
-                className="mx-auto flex items-center gap-1.5 text-xs font-medium text-text-muted hover:text-text"
-              >
-                <Mail className="h-3.5 w-3.5" />
-                {t('auth.signInWithEmail')}
-              </button>
             </div>
           )}
 
