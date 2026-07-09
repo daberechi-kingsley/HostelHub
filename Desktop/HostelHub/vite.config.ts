@@ -13,7 +13,11 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // 'prompt' — we show a top banner ("A new version is available. Tap to
+      // update.") and only skipWaiting + reload when the user taps. This keeps
+      // students from being reloaded mid-search / mid-chat by a background
+      // update. See src/components/UpdateAvailableBanner.tsx.
+      registerType: 'prompt',
       // injectManifest lets us own the SW file — required so the FCM background
       // handler can use import.meta.env for the Firebase config.
       strategies: 'injectManifest',

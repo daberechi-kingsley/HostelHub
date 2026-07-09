@@ -384,6 +384,10 @@ export const translations = {
     'footer.whatsappLabel': 'WhatsApp',
     'footer.emailLabel': 'Email',
     'footer.respondNote': 'We typically respond within 24 hours.',
+
+    // ── PWA update prompt ─────────────────────────────────────────
+    'update.available': 'A new version of HostelHub is available. Tap to update.',
+    'update.dismiss': 'Dismiss',
   },
   fr: {
     // ── Nav / chrome ──────────────────────────────────────────────
@@ -772,6 +776,10 @@ export const translations = {
     'footer.whatsappLabel': 'WhatsApp',
     'footer.emailLabel': 'E-mail',
     'footer.respondNote': 'Nous répondons généralement sous 24 heures.',
+
+    // ── PWA update prompt ─────────────────────────────────────────
+    'update.available': 'Une nouvelle version de HostelHub est disponible. Appuyez pour mettre à jour.',
+    'update.dismiss': 'Ignorer',
   },
 } as const;
 
