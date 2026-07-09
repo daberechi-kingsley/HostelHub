@@ -120,7 +120,7 @@ export const translations = {
     'search.aiRanked': 'AI ranked',
     'search.clearFilters': 'Clear filters',
     'search.sortedRelevance': 'Sorted by relevance',
-    'search.sortedNewest': 'Sorted by newest',
+    'search.sortedNewest': 'Sorted by top rated',
     'search.emptyTitle': 'No listings matched',
     'search.emptyDesc':
       'Try removing a filter, widening your price, or searching a different zone.',
@@ -172,6 +172,15 @@ export const translations = {
     'auth.verifyContinue': 'Verify & continue',
     'auth.signIn': 'Sign in',
     'auth.otpDevNote': 'Using emulators in dev — the code is printed in the Firebase emulator logs.',
+    'auth.registerTitle': 'Create your account',
+    'auth.registerBody': 'Join students finding rooms in Buea.',
+    'auth.fullName': 'Full name',
+    'auth.fullNamePlaceholder': 'Your full name',
+    'auth.createAccount': 'Create account',
+    'auth.alreadyHaveAccount': 'Already have an account? Sign in',
+    'auth.newToHostelHub': 'New to HostelHub?',
+    'auth.createAnAccount': 'Create an account',
+    'auth.chooseRole': 'I am a...',
 
     // ── Role selection ────────────────────────────────────────────
     'role.welcome': 'Welcome to HostelHub 👋',
@@ -365,6 +374,29 @@ export const translations = {
     // ── Not found ─────────────────────────────────────────────────
     'notfound.title': 'Page not found',
     'notfound.desc': "The page you're looking for doesn't exist or has moved.",
+
+    // ── Footer ────────────────────────────────────────────────────
+    'footer.tagline': 'Find. Verify. Move in.',
+    'footer.description': 'The verified student accommodation platform for Buea.',
+    'footer.platform': 'Platform',
+    'footer.browseListings': 'Browse Listings',
+    'footer.findFlatmate': 'Find a Flatmate',
+    'footer.listProperty': 'List Your Property',
+    'footer.howItWorks': 'How It Works',
+    'footer.company': 'Company',
+    'footer.about': 'About HostelHub',
+    'footer.contact': 'Contact Us',
+    'footer.privacy': 'Privacy Policy',
+    'footer.terms': 'Terms of Service',
+    'footer.rights': 'All rights reserved.',
+    'footer.contactPopoverTitle': 'Contact HostelHub',
+    'footer.whatsappLabel': 'WhatsApp',
+    'footer.emailLabel': 'Email',
+    'footer.respondNote': 'We typically respond within 24 hours.',
+
+    // ── PWA update prompt ─────────────────────────────────────────
+    'update.available': 'A new version of HostelHub is available. Tap to update.',
+    'update.dismiss': 'Dismiss',
   },
   fr: {
     // ── Nav / chrome ──────────────────────────────────────────────
@@ -477,7 +509,7 @@ export const translations = {
     'search.aiRanked': 'Classé par IA',
     'search.clearFilters': 'Effacer les filtres',
     'search.sortedRelevance': 'Trié par pertinence',
-    'search.sortedNewest': 'Trié par nouveauté',
+    'search.sortedNewest': 'Trié par mieux notés',
     'search.emptyTitle': 'Aucune annonce trouvée',
     'search.emptyDesc':
       'Essayez de retirer un filtre, d’élargir votre budget ou de chercher une autre zone.',
@@ -537,6 +569,15 @@ export const translations = {
     'auth.signIn': 'Se connecter',
     'auth.otpDevNote':
       'Émulateurs en développement — le code apparaît dans les journaux de l’émulateur Firebase.',
+    'auth.registerTitle': 'Creer votre compte',
+    'auth.registerBody': 'Rejoignez les etudiants qui trouvent des chambres a Buea.',
+    'auth.fullName': 'Nom complet',
+    'auth.fullNamePlaceholder': 'Votre nom complet',
+    'auth.createAccount': 'Creer un compte',
+    'auth.alreadyHaveAccount': 'Deja un compte ? Se connecter',
+    'auth.newToHostelHub': 'Nouveau sur HostelHub ?',
+    'auth.createAnAccount': 'Creer un compte',
+    'auth.chooseRole': 'Je suis...',
 
     // ── Role selection ────────────────────────────────────────────
     'role.welcome': 'Bienvenue sur HostelHub 👋',
@@ -734,6 +775,29 @@ export const translations = {
     // ── Not found ─────────────────────────────────────────────────
     'notfound.title': 'Page introuvable',
     'notfound.desc': "La page que vous recherchez n'existe pas ou a été déplacée.",
+
+    // ── Footer ────────────────────────────────────────────────────
+    'footer.tagline': 'Trouvez. Vérifiez. Emménagez.',
+    'footer.description': 'La plateforme de logement étudiant vérifiée pour Buéa.',
+    'footer.platform': 'Plateforme',
+    'footer.browseListings': 'Parcourir les annonces',
+    'footer.findFlatmate': 'Trouver un colocataire',
+    'footer.listProperty': 'Publier votre bien',
+    'footer.howItWorks': 'Comment ça marche',
+    'footer.company': 'Entreprise',
+    'footer.about': 'À propos de HostelHub',
+    'footer.contact': 'Nous contacter',
+    'footer.privacy': 'Politique de confidentialité',
+    'footer.terms': "Conditions d'utilisation",
+    'footer.rights': 'Tous droits réservés.',
+    'footer.contactPopoverTitle': 'Contacter HostelHub',
+    'footer.whatsappLabel': 'WhatsApp',
+    'footer.emailLabel': 'E-mail',
+    'footer.respondNote': 'Nous répondons généralement sous 24 heures.',
+
+    // ── PWA update prompt ─────────────────────────────────────────
+    'update.available': 'Une nouvelle version de HostelHub est disponible. Appuyez pour mettre à jour.',
+    'update.dismiss': 'Ignorer',
   },
 } as const;
 

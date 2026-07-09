@@ -25,6 +25,28 @@ import ListingGrid from '@/features/listings/ListingGrid';
 import { useListings } from '@/features/listings/hooks';
 import { useAiSearch } from '@/features/search/useAiSearch';
 import { useT } from '@/i18n/useT';
+import type { Listing } from '@/types/listing';
+
+/**
+ * Default result order: highest-rated first.
+ *   - Unrated listings (rating 0 / null / undefined) always sink to the bottom.
+ *   - Equal ratings: verified listings rank above unverified ones.
+ *   - Equal rating + verification: newest first (stable, deterministic).
+ * Only applied to the base "no active search" order — AI ranking (when the
+ * student types a query) still takes priority, same as before.
+ */
+function byTopRated(a: Listing, b: Listing): number {
+  const ratingOf = (l: Listing) => (typeof l.rating === 'number' && l.rating > 0 ? l.rating : -1);
+  const ra = ratingOf(a);
+  const rb = ratingOf(b);
+  if (ra !== rb) return rb - ra;
+
+  const va = a.verified ? 1 : 0;
+  const vb = b.verified ? 1 : 0;
+  if (va !== vb) return vb - va;
+
+  return b.createdAt - a.createdAt;
+}
 
 export default function SearchPage() {
   const t = useT();
@@ -45,8 +67,9 @@ export default function SearchPage() {
     const q = query.trim().toLowerCase();
     const isAiDegraded = aiResult?.degraded === true;
 
-    // Re-order by AI ranking when we have a successful, non-degraded response
-    let ordered = source;
+    // Re-order by AI ranking when we have a successful, non-degraded response;
+    // otherwise the default order is highest-rated first (see byTopRated).
+    let ordered = [...source].sort(byTopRated);
     const hasAiRanking =
       q.length > 0 && Array.isArray(aiResult?.rankedIds) && aiResult!.rankedIds.length > 0;
 

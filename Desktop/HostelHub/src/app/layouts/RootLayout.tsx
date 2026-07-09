@@ -1,6 +1,8 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import TopNav from './TopNav';
 import BottomNav from './BottomNav';
+import Footer from '@/components/layout/Footer';
+import UpdateAvailableBanner from '@/components/UpdateAvailableBanner';
 import LazyAuthModal from '@/features/auth/LazyAuthModal';
 import RoleSelection from '@/features/auth/RoleSelection';
 import CompareBar from '@/features/compare/CompareBar';
@@ -14,6 +16,9 @@ function FcmRegistrar() {
 }
 
 export default function RootLayout() {
+  const { pathname } = useLocation();
+  const isAdminRoute = pathname.startsWith('/admin');
+
   return (
     <div className="flex min-h-full flex-col">
       {/* Soft brand wash behind every page — pure CSS gradients (no image, no
@@ -27,10 +32,13 @@ export default function RootLayout() {
             'radial-gradient(55% 50% at 105% 105%, rgba(255,107,74,0.11), transparent 60%)',
         }}
       />
+      {/* SW update prompt — top overlay, non-blocking */}
+      <UpdateAvailableBanner />
       <TopNav />
       <main className="flex-1">
         <Outlet />
       </main>
+      {!isAdminRoute && <Footer />}
       <BottomNav />
       {/* Global overlays and portals */}
       <LazyAuthModal />
