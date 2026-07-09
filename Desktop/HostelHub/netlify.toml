@@ -1,0 +1,71 @@
+# Netlify build & deploy config for HostelHub Buea.
+#
+# What this gives you:
+#   • Every push to a branch → Netlify runs `npm run build` and deploys.
+#   • Every PR → a Deploy Preview at deploy-preview-N--<site>.netlify.app
+#   • main → the production site.
+#
+# The header rules matter for the PWA update prompt:
+#   - The service worker (sw.js) MUST NOT be long-cached, otherwise
+#     browsers hold onto the old SW and users never see the "new version
+#     available" banner.
+#   - index.html must always be fresh so it points at the newest hashed
+#     bundle.
+#   - Everything Vite hashes into /assets is safe to cache forever.
+
+[build]
+  command   = "npm run build"
+  publish   = "dist"
+
+[build.environment]
+  # Vite 5 needs Node 18+; pinning to 20 (current LTS) so previews and
+  # production build against a known-good version.
+  NODE_VERSION = "20"
+
+# ── SPA fallback (already handled by public/_redirects — kept here as a
+# safety net in case that file is ever deleted).
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
+
+# ── Cache: service worker (never cache, always revalidate) ─────────────
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/sw.mjs"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/workbox-*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# ── Cache: manifest + index (fresh, but revalidate) ────────────────────
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# ── Cache: hashed assets (immutable — cache forever) ───────────────────
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# ── Security headers (cheap wins) ──────────────────────────────────────
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
