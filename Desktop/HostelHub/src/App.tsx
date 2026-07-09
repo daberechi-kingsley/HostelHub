@@ -15,6 +15,10 @@ const AdminPage = lazy(() => import('@/pages/AdminPage'));
 const LandlordDashboardPage = lazy(() => import('@/pages/LandlordDashboardPage'));
 const RoommatePage = lazy(() => import('@/pages/RoommatePage'));
 const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
+const HowItWorksPage = lazy(() => import('@/pages/HowItWorksPage'));
+const AboutPage = lazy(() => import('@/pages/AboutPage'));
+const PrivacyPage = lazy(() => import('@/pages/PrivacyPage'));
+const TermsPage = lazy(() => import('@/pages/TermsPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
 /** Sends landlords/agents straight to their dashboard; everyone else sees the home page. */
@@ -112,6 +116,38 @@ export default function App() {
           element={
             <Suspense fallback={<PageSpinner />}>
               <ProfilePage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="how-it-works"
+          element={
+            <Suspense fallback={<PageSpinner />}>
+              <HowItWorksPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="about"
+          element={
+            <Suspense fallback={<PageSpinner />}>
+              <AboutPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="privacy"
+          element={
+            <Suspense fallback={<PageSpinner />}>
+              <PrivacyPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="terms"
+          element={
+            <Suspense fallback={<PageSpinner />}>
+              <TermsPage />
             </Suspense>
           }
         />
