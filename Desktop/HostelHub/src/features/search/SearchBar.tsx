@@ -1,4 +1,4 @@
-import { Search, Sparkles } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, type FormEvent } from 'react';
 import { useT } from '@/i18n/useT';
@@ -53,7 +53,7 @@ export default function SearchBar({
         className="btn-primary shrink-0"
         aria-label="Search"
       >
-        <Sparkles className="h-4 w-4" strokeWidth={2.5} />
+        <Search className="h-4 w-4" strokeWidth={2.5} />
         <span className={isHero ? '' : 'hidden sm:inline'}>{t('search.button')}</span>
       </button>
     </form>

@@ -1,6 +1,8 @@
 /**
- * Admin users panel — every registered user with a Suspend / Unsuspend action.
+ * Admin users panel — registered users grouped by role tabs (Students / Landlords / Agents).
+ * Admin accounts are excluded from the list.
  */
+import { useState } from 'react';
 import { GraduationCap, Building2, Briefcase, ShieldCheck, Loader2, Users } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useAllUsers, useSuspendUser } from './useAdminData';
@@ -10,6 +12,14 @@ import PageSpinner from '@/components/feedback/PageSpinner';
 import { useT } from '@/i18n/useT';
 import type { TranslationKey } from '@/i18n/translations';
 import type { AppUser, UserRole } from '@/types/user';
+
+type RoleTab = 'student' | 'landlord' | 'agent';
+
+const ROLE_TABS: { id: RoleTab; labelKey: TranslationKey; icon: typeof Users }[] = [
+  { id: 'student',  labelKey: 'role.studentLabel',  icon: GraduationCap },
+  { id: 'landlord', labelKey: 'role.landlordLabel', icon: Building2 },
+  { id: 'agent',    labelKey: 'role.agentLabel',    icon: Briefcase },
+];
 
 const ROLE_META: Record<UserRole, { labelKey: TranslationKey; icon: typeof Users }> = {
   student:  { labelKey: 'role.student',       icon: GraduationCap },
@@ -55,24 +65,21 @@ function UserRow({ user }: { user: AppUser }) {
         <p className="truncate text-xs text-text-muted">{user.email ?? 'No email on file'}</p>
       </div>
 
-      {/* Admins can't be suspended from here */}
-      {user.role !== 'admin' && (
-        <Button
-          variant={isSuspended ? 'secondary' : 'ghost'}
-          size="sm"
-          disabled={suspend.isPending}
-          className={clsx(!isSuspended && 'text-accent-700 hover:bg-accent-50')}
-          onClick={() => suspend.mutate({ uid: user.uid, suspended: !isSuspended })}
-        >
-          {suspend.isPending ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : isSuspended ? (
-            t('admin.unsuspend')
-          ) : (
-            t('admin.suspend')
-          )}
-        </Button>
-      )}
+      <Button
+        variant={isSuspended ? 'secondary' : 'ghost'}
+        size="sm"
+        disabled={suspend.isPending}
+        className={clsx(!isSuspended && 'text-accent-700 hover:bg-accent-50')}
+        onClick={() => suspend.mutate({ uid: user.uid, suspended: !isSuspended })}
+      >
+        {suspend.isPending ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : isSuspended ? (
+          t('admin.unsuspend')
+        ) : (
+          t('admin.suspend')
+        )}
+      </Button>
     </li>
   );
 }
@@ -80,6 +87,7 @@ function UserRow({ user }: { user: AppUser }) {
 export default function UsersList() {
   const t = useT();
   const { data: users, isLoading, isError } = useAllUsers();
+  const [roleTab, setRoleTab] = useState<RoleTab>('student');
 
   if (isLoading) return <PageSpinner />;
 
@@ -92,7 +100,11 @@ export default function UsersList() {
     );
   }
 
-  if (!users || users.length === 0) {
+  // Filter out admin accounts entirely
+  const nonAdminUsers = (users ?? []).filter((u) => u.role !== 'admin');
+  const filtered = nonAdminUsers.filter((u) => u.role === roleTab);
+
+  if (nonAdminUsers.length === 0) {
     return (
       <EmptyState
         icon={<Users className="h-10 w-10" />}
@@ -104,12 +116,53 @@ export default function UsersList() {
 
   return (
     <div>
-      <p className="mb-4 text-sm text-text-muted">{users.length} {t('admin.usersCount')}</p>
-      <ul className="space-y-3">
-        {users.map((user) => (
-          <UserRow key={user.uid} user={user} />
-        ))}
-      </ul>
+      <p className="mb-4 text-sm text-text-muted">
+        {nonAdminUsers.length} {t('admin.usersCount')}
+      </p>
+
+      {/* Role tabs */}
+      <div className="mb-5 flex gap-2 overflow-x-auto">
+        {ROLE_TABS.map(({ id, labelKey, icon: TabIcon }) => {
+          const count = nonAdminUsers.filter((u) => u.role === id).length;
+          const active = roleTab === id;
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setRoleTab(id)}
+              className={clsx(
+                'inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition',
+                active
+                  ? 'bg-primary text-white shadow-sm'
+                  : 'bg-bg-hover text-text-muted hover:bg-border',
+              )}
+            >
+              <TabIcon className="h-4 w-4" />
+              {t(labelKey)}
+              <span className={clsx(
+                'ml-1 rounded-full px-1.5 py-0.5 text-xs font-bold',
+                active ? 'bg-white/20 text-white' : 'bg-bg text-text-muted',
+              )}>
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {filtered.length === 0 ? (
+        <EmptyState
+          icon={<Users className="h-10 w-10" />}
+          title={`No ${roleTab}s yet`}
+          description={`No users have registered as ${roleTab}s.`}
+        />
+      ) : (
+        <ul className="space-y-3">
+          {filtered.map((user) => (
+            <UserRow key={user.uid} user={user} />
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

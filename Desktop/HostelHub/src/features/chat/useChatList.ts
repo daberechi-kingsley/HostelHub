@@ -38,7 +38,16 @@ export function useChatList() {
       setLoading(false);
     }
 
+    // Safety timeout — if the RTDB subscription never fires (offline, DB not
+    // set up), stop the spinner after 5 seconds and show empty state.
+    const timeout = setTimeout(() => {
+      if (active) {
+        setLoading(false);
+      }
+    }, 5_000);
+
     const indexUnsub = subscribeUserChatIds(uid, (chatIds) => {
+      clearTimeout(timeout);
       // Tear down old meta subscriptions
       metaUnsubs.forEach((u) => u());
       metaUnsubs.length = 0;
@@ -73,6 +82,7 @@ export function useChatList() {
 
     return () => {
       active = false;
+      clearTimeout(timeout);
       indexUnsub();
       metaUnsubs.forEach((u) => u());
     };
