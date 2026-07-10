@@ -104,6 +104,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     const unsub = onAuthStateChanged(getFirebaseAuth(), async (user) => {
       currentUserRef.current = user;
+      setLoading(true);
       setFirebaseUser(user);
       await loadAppUser(user);
       setLoading(false);
