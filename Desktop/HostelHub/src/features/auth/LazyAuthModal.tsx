@@ -14,6 +14,8 @@ import {
   isAdminCredential,
   signInAdmin,
   registerWithEmailPassword,
+  userDocExists,
+  createUserDoc,
 } from '@/lib/firebase/auth';
 import Button from '@/components/ui/Button';
 import { useT } from '@/i18n/useT';
@@ -95,8 +97,21 @@ export default function LazyAuthModal() {
 
   async function handleGoogle() {
     setBusy(true); setError(null);
-    try { await signInWithGoogle(); hide(); }
-    catch (err) { setError(humanizeAuthError(err)); setBusy(false); }
+    try {
+      const user = await signInWithGoogle();
+      const exists = await userDocExists(user.uid);
+      if (!exists) {
+        await createUserDoc({
+          uid: user.uid,
+          role: 'student',
+          displayName: user.displayName ?? 'New user',
+          email: user.email ?? undefined,
+          avatarUrl: user.photoURL ?? undefined,
+        });
+      }
+      await refreshAppUser();
+      hide();
+    } catch (err) { setError(humanizeAuthError(err)); setBusy(false); }
   }
 
   async function handleSendOtp(e: FormEvent) {
@@ -114,7 +129,22 @@ export default function LazyAuthModal() {
     if (!confirmation) return;
     if (otp.trim().length < 6) { setError('Enter the 6-digit code.'); return; }
     setBusy(true); setError(null);
-    try { await confirmation.confirm(otp.trim()); hide(); }
+    try {
+      const cred = await confirmation.confirm(otp.trim());
+      if (cred.user) {
+        const exists = await userDocExists(cred.user.uid);
+        if (!exists) {
+          await createUserDoc({
+            uid: cred.user.uid,
+            role: 'student',
+            displayName: cred.user.displayName ?? 'New user',
+            phone: cred.user.phoneNumber ?? undefined,
+          });
+        }
+        await refreshAppUser();
+      }
+      hide();
+    }
     catch (err) { setError(humanizeAuthError(err)); setBusy(false); }
   }
 

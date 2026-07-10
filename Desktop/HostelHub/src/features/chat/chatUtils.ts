@@ -54,7 +54,7 @@ export async function resolveCounterpart(listingId: string): Promise<Counterpart
     chatMode?: ChatMode;
     conciergeUid?: string;
   };
-  const chatMode = config.chatMode ?? 'concierge';
+  const chatMode = config.chatMode ?? 'direct';
 
   if (chatMode === 'concierge') {
     // Fall back to listing owner if concierge uid not set

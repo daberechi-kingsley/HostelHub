@@ -2,6 +2,7 @@ import { createContext, useCallback, useEffect, useRef, useState, type ReactNode
 import { onAuthStateChanged, type User as FirebaseUser } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { getFirebaseAuth, getFirebaseDb } from '@/lib/firebase';
+import { createUserDoc } from '@/lib/firebase/auth';
 import { ADMIN_EMAILS } from '@/config/constants';
 import type { AppUser, UserRole } from '@/types/user';
 
@@ -66,8 +67,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
           fcmTokens: data.fcmTokens,
         });
       } else {
-        // First sign-in — no user doc yet. RoleSelection will create it.
-        setAppUser(null);
+        // First sign-in — no user doc yet. For Google/phone users, auto-create
+        // with role 'student' so the RoleSelection modal never flashes.
+        const provider = user.providerData[0]?.providerId;
+        if (provider === 'google.com' || provider === 'phone') {
+          const role = 'student' as const;
+          await createUserDoc({
+            uid: user.uid,
+            role,
+            displayName: user.displayName ?? 'New user',
+            phone: user.phoneNumber ?? undefined,
+            email: user.email ?? undefined,
+            avatarUrl: user.photoURL ?? undefined,
+          });
+          setAppUser({
+            uid: user.uid,
+            role,
+            displayName: user.displayName ?? 'New user',
+            phone: user.phoneNumber ?? undefined,
+            email: user.email ?? undefined,
+            avatarUrl: user.photoURL ?? undefined,
+            verified: false,
+            createdAt: Date.now(),
+            fcmTokens: [],
+          });
+        } else {
+          setAppUser(null);
+        }
       }
     } catch (err) {
       console.error('[AuthProvider] failed to load user doc', err);

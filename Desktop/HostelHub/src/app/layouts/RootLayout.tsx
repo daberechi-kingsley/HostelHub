@@ -17,7 +17,6 @@ function FcmRegistrar() {
 
 export default function RootLayout() {
   const { pathname } = useLocation();
-  const isAdminRoute = pathname.startsWith('/admin');
 
   return (
     <div className="flex min-h-full flex-col">
@@ -38,7 +37,7 @@ export default function RootLayout() {
       <main className="flex-1">
         <Outlet />
       </main>
-      {!isAdminRoute && <Footer />}
+      {pathname === '/' && <Footer />}
       <BottomNav />
       {/* Global overlays and portals */}
       <LazyAuthModal />

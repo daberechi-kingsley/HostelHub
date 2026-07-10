@@ -17,6 +17,8 @@ import {
   where,
 } from 'firebase/firestore';
 import { getFirebaseDb } from '@/lib/firebase';
+import { buildChatId } from '@/features/chat/chatUtils';
+import { createOrGetChat, sendMessage } from '@/features/chat/api';
 import type { VisitRequest, VisitStatus } from '@/types/inquiry';
 
 // ── Time slots shown in the scheduling form ──────────────────────────────────
@@ -80,6 +82,22 @@ export async function setVisitRequest(params: {
     createdAt: now,
     updatedAt: now,
   });
+
+  // Also open a direct chat thread and send the visit message
+  const chatId = buildChatId(params.studentId, params.landlordId, params.listingId);
+  await createOrGetChat(chatId, {
+    participants: { [params.studentId]: true, [params.landlordId]: true },
+    listingId: params.listingId,
+    listingTitle: params.listingTitle,
+    mode: 'direct',
+    createdAt: now,
+    lastMessage: '',
+    lastMessageTs: 0,
+  });
+  const chatText = params.message
+    ? `📅 Visit request for ${params.proposedDate} (${params.proposedSlot}): ${params.message}`
+    : `📅 Visit request for ${params.proposedDate} (${params.proposedSlot})`;
+  await sendMessage(chatId, params.studentId, chatText);
 }
 
 /**
@@ -143,6 +161,27 @@ export async function respondToVisit(
     responseNote: responseNote.trim(),
     updatedAt: Date.now(),
   });
+
+  // Send the landlord's response as a chat message so the student sees it in-app
+  const snap = await getDoc(doc(getFirebaseDb(), 'inquiries', inquiryId));
+  if (snap.exists()) {
+    const data = snap.data() as { studentId: string; landlordId: string; listingId: string; listingTitle: string };
+    const chatId = buildChatId(data.studentId, data.landlordId, data.listingId);
+    // Ensure thread exists (in case old requests predate this feature)
+    await createOrGetChat(chatId, {
+      participants: { [data.studentId]: true, [data.landlordId]: true },
+      listingId: data.listingId,
+      listingTitle: data.listingTitle,
+      mode: 'direct',
+      createdAt: Date.now(),
+      lastMessage: '',
+      lastMessageTs: 0,
+    });
+    const emoji = status === 'confirmed' ? '✅' : '❌';
+    const label = status === 'confirmed' ? 'Visit confirmed' : 'Visit declined';
+    const note = responseNote.trim() ? ` — ${responseNote.trim()}` : '';
+    await sendMessage(chatId, data.landlordId, `${emoji} ${label}${note}`);
+  }
 }
 
 /**
