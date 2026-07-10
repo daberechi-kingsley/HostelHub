@@ -471,6 +471,8 @@ function humanizeAuthError(err: unknown): string {
       return 'That email is already registered. Try signing in instead.';
     case 'auth/weak-password':
       return 'Password must be at least 6 characters.';
+    case 'auth/unauthorized-domain':
+      return 'This domain is not authorized for sign-in. The site admin needs to add it in Firebase Console → Auth → Settings → Authorized domains.';
     case 'auth/network-request-failed':
       return 'Network error. Check your connection and try again.';
     default:
