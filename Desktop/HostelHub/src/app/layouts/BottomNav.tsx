@@ -5,6 +5,7 @@ import { clsx } from 'clsx';
 import type { LucideProps } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import { useUser } from '@/hooks/useUser';
+import { useIsAdmin } from '@/hooks/useIsAdmin';
 import type { TranslationKey } from '@/i18n/translations';
 
 interface NavItem {
@@ -37,8 +38,8 @@ const ADMIN_ITEMS: NavItem[] = [
 export default function BottomNav() {
   const t = useT();
   const { appUser } = useUser();
+  const isAdmin = useIsAdmin();
   const isLandlord = appUser?.role === 'landlord' || appUser?.role === 'agent';
-  const isAdmin = appUser?.role === 'admin';
   const items = isAdmin ? ADMIN_ITEMS : isLandlord ? LANDLORD_ITEMS : STUDENT_ITEMS;
 
   return (

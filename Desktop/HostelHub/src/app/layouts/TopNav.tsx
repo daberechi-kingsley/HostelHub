@@ -5,6 +5,7 @@ import AccountMenu from '@/features/auth/AccountMenu';
 import LanguageSwitcher from '@/features/i18n/LanguageSwitcher';
 import { useT } from '@/i18n/useT';
 import { useUser } from '@/hooks/useUser';
+import { useIsAdmin } from '@/hooks/useIsAdmin';
 
 function navCls({ isActive }: { isActive: boolean }) {
   return clsx(
@@ -16,8 +17,8 @@ function navCls({ isActive }: { isActive: boolean }) {
 export default function TopNav() {
   const t = useT();
   const { appUser } = useUser();
+  const isAdmin = useIsAdmin();
   const isLandlord = appUser?.role === 'landlord' || appUser?.role === 'agent';
-  const isAdmin = appUser?.role === 'admin';
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-bg-card/95 backdrop-blur">
